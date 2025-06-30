@@ -55,7 +55,7 @@ A simple and elegant web application built with *Streamlit* that allows users to
 --- 
 
 ## 🚀 Live Demo
-👉 
+👉 (https://resume-generator-ma7cgjqmzse25o5rbqtilm.streamlit.app/)
 
 ## 📌 Customization
 
