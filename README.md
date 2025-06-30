@@ -29,7 +29,7 @@ A simple and elegant web application built with *Streamlit* that allows users to
 1. Clone the repository:
    ```bash
    git clone https://github.com/sdpandya007/Resume-Generator.git
-   cd mortgage-calculator-streamlit
+   cd resume-generator-streamlit
    ```
 
 2. Create virtual environment in folder's cmd:
