@@ -143,7 +143,7 @@ def main():
     # Load CSS
     local_css("style.css")
     
-    st.title("One-Page Resume Generator")
+    st.title("Resume Generator")
     st.markdown("Fill in your details below to generate a professional one-page resume in PDF format.")
     
     with st.form("resume_form"):
