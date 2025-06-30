@@ -68,9 +68,3 @@ Adjust PDF layout by editing the create_pdf() function in app.py
 This project is licensed under the MIT License. Feel free to use and modify.
 
 ---
-
-💼 Created by Shreyans Pandya
-
----
-
-Let me know if you want a requirements.txt file or GitHub-ready version (with deploy buttons).# Resume-Generator
