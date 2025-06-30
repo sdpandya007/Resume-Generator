@@ -10,10 +10,14 @@ def local_css(file_name):
     with open(file_name) as f:
         st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
 
-# Generate PDF
+# Generate PDF with borders
 def create_pdf(data, photo_path=None):
     pdf = FPDF()
     pdf.add_page()
+    
+    # Add page border
+    pdf.set_draw_color(100, 100, 100)  # Gray border color
+    pdf.rect(5, 5, 200, 287)  # Page border rectangle
     
     # Header
     pdf.set_font('Arial', 'B', 16)
@@ -39,6 +43,15 @@ def create_pdf(data, photo_path=None):
     pdf.cell(0, 5, data['address'], ln=1)
     pdf.cell(0, 5, f"Mob No.: {data['phone']}", ln=1)
     pdf.cell(0, 5, f"Email Id: {data['email']}", ln=1)
+    
+    # Website links
+    if data.get('website'):
+        pdf.cell(0, 5, f"Website: {data['website']}", ln=1)
+    if data.get('github'):
+        pdf.cell(0, 5, f"GitHub: {data['github']}", ln=1)
+    if data.get('linkedin'):
+        pdf.cell(0, 5, f"LinkedIn: {data['linkedin']}", ln=1)
+    
     pdf.ln(10)
     
     # Horizontal line
@@ -57,7 +70,8 @@ def create_pdf(data, photo_path=None):
     pdf.cell(0, 7, "ACADEMIC QUALIFICATION", ln=1)
     pdf.set_font('Arial', '', 10)
     
-    # Table header
+    # Table header with borders
+    pdf.set_draw_color(0, 0, 0)  # Black for table borders
     col_widths = [15, 45, 60, 20, 20]
     headers = ["S.No.", "Qualification", "University/Board", "Year", "Per %"]
     
@@ -65,7 +79,7 @@ def create_pdf(data, photo_path=None):
         pdf.cell(col_widths[i], 7, header, border=1)
     pdf.ln()
     
-    # Table rows
+    # Table rows with borders
     for i, edu in enumerate(data['education']):
         pdf.cell(col_widths[0], 7, str(i+1), border=1)
         pdf.cell(col_widths[1], 7, edu['qualification'], border=1)
@@ -124,7 +138,7 @@ def create_pdf(data, photo_path=None):
     # Date and Place
     pdf.cell(0, 5, f"Place : {data['place']}", ln=1)
     pdf.ln(20)
-    
+
     return pdf
 
 def save_uploaded_file(uploaded_file):
@@ -143,7 +157,7 @@ def main():
     # Load CSS
     local_css("style.css")
     
-    st.title("Resume Generator")
+    st.title("Professional Resume Generator")
     st.markdown("Fill in your details below to generate a professional one-page resume in PDF format.")
     
     with st.form("resume_form"):
@@ -158,6 +172,16 @@ def main():
             email = st.text_input("Email*", placeholder="sachinkumar@gmail.com")
         
         address = st.text_area("Full Address*", placeholder="P - 171 Gali No. 5\nBajjeet Nagar, Patel Nagar\nNew Delhi - 110008")
+        
+        # Website Links
+        st.header("Website Links (Optional)")
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            website = st.text_input("Personal Website", placeholder="yourwebsite.com")
+        with col2:
+            github = st.text_input("GitHub", placeholder="github.com/username")
+        with col3:
+            linkedin = st.text_input("LinkedIn", placeholder="linkedin.com/in/username")
         
         # Photo Upload (optional)
         st.header("Passport Size Photo (Optional)")
@@ -226,6 +250,9 @@ def main():
                     'phone': phone,
                     'email': email,
                     'address': address,
+                    'website': website,
+                    'github': github,
+                    'linkedin': linkedin,
                     'objective': objective,
                     'education': education,
                     'other_qualifications': other_qualifications,
