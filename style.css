@@ -1,0 +1,82 @@
+/* Main container styling */
+.stApp {
+    background-color: #f5f7fa;
+    font-family: 'Arial', sans-serif;
+}
+
+/* Form styling */
+.stForm {
+    background-color: white;
+    padding: 2rem;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-bottom: 2rem;
+}
+
+/* Input field styling */
+.stTextInput>div>div>input, 
+.stTextArea>div>textarea {
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    padding: 8px;
+    font-size: 14px;
+}
+
+.stTextInput>div>div>input:focus, 
+.stTextArea>div>textarea:focus {
+    border-color: #4a90e2;
+    box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+}
+
+/* Button styling */
+.stButton>button {
+    background-color: #4a90e2;
+    color: white;
+    border: none;
+    padding: 0.5rem 1.5rem;
+    border-radius: 3px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.stButton>button:hover {
+    background-color: #3a7bc8;
+}
+
+/* Header styling */
+h1, h2, h3, h4 {
+    color: #2c3e50;
+    margin-bottom: 1rem;
+}
+
+/* Expander styling */
+.stExpander {
+    background-color: #f8f9fa;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+/* Error message styling */
+.stAlert {
+    border-radius: 5px;
+}
+
+/* Download link styling */
+a {
+    color: #4a90e2;
+    text-decoration: none;
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+    background-color: #e8f1fc;
+    border-radius: 3px;
+    display: inline-block;
+    margin-top: 1rem;
+    transition: all 0.3s ease;
+}
+
+a:hover {
+    background-color: #d4e3f7;
+    color: #3a7bc8;
+}
