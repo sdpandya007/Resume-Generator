@@ -136,8 +136,11 @@ def create_pdf(data, photo_path=None):
     pdf.ln(10)
     
     # Date and Place
-    pdf.cell(0, 5, f"Place : {data['place']}", ln=1)
-    pdf.ln(20)
+    pdf.set_font('Arial', '', 10)
+    pdf.cell(0, 5, f"Place:- {data['place']}", ln=1)  # Note the hyphen after "Place"
+    pdf.set_font('Arial', 'B', 10)
+    pdf.cell(0, 5, f"({data['name']})", ln=1, align='C')
+    pdf.ln(15)  # Adjust spacing as needed
 
     return pdf
 
