@@ -1,82 +1,377 @@
-/* Main container styling */
+/* =========================================================================
+   style.css - Resume Builder (Streamlit)
+   Loaded by app.py via local_css("style.css").
+   ========================================================================= */
+
+/* ---------------------------------------------------------------- palette */
+:root {
+    --accent:        #1F4E79;   /* matches default "Navy" accent in the app  */
+    --accent-soft:   #E8EEF5;
+    --ink:           #1F2933;
+    --muted:         #52606D;
+    --line:          #D9E1EA;
+    --bg-card:       #FFFFFF;
+    --bg-page:       #F7F9FC;
+    --ok:            #1F6F43;
+    --warn:          #B45309;
+    --radius:        10px;
+    --radius-sm:     6px;
+    --shadow:        0 1px 2px rgba(16, 24, 40, .06),
+                     0 1px 3px rgba(16, 24, 40, .10);
+}
+
+/* ------------------------------------------------------------- base page */
+html, body, [class*="css"] {
+    font-family: "Segoe UI", "Inter", -apple-system, BlinkMacSystemFont,
+                 Roboto, "Helvetica Neue", Arial, sans-serif;
+    color: var(--ink);
+}
+
 .stApp {
-    background-color: #f5f7fa;
-    font-family: 'Arial', sans-serif;
+    background: var(--bg-page);
 }
 
-/* Form styling */
-.stForm {
-    background-color: white;
-    padding: 2rem;
-    border-radius: 5px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    margin-bottom: 2rem;
+/* Streamlit's main container - tighter, centered, breathing room */
+.block-container {
+    padding-top: 2.2rem;
+    padding-bottom: 3rem;
+    max-width: 1500px;
 }
 
-/* Input field styling */
-.stTextInput>div>div>input, 
-.stTextArea>div>textarea {
-    border: 1px solid #ddd;
-    border-radius: 3px;
-    padding: 8px;
-    font-size: 14px;
-}
-
-.stTextInput>div>div>input:focus, 
-.stTextArea>div>textarea:focus {
-    border-color: #4a90e2;
-    box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
-}
-
-/* Button styling */
-.stButton>button {
-    background-color: #4a90e2;
-    color: white;
-    border: none;
-    padding: 0.5rem 1.5rem;
-    border-radius: 3px;
-    font-weight: 500;
-    transition: all 0.3s ease;
-}
-
-.stButton>button:hover {
-    background-color: #3a7bc8;
-}
-
-/* Header styling */
+/* ---------------------------------------------------------- typography */
 h1, h2, h3, h4 {
-    color: #2c3e50;
-    margin-bottom: 1rem;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+    margin-top: .4rem;
 }
 
-/* Expander styling */
-.stExpander {
-    background-color: #f8f9fa;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    padding: 1rem;
-    margin-bottom: 1rem;
+h1 {
+    font-weight: 700;
+    font-size: 1.85rem;
 }
 
-/* Error message styling */
+h2 { font-weight: 650; font-size: 1.35rem; }
+h3 { font-weight: 650; font-size: 1.1rem;  }
+
+/* The big page title ("Professional Resume Builder") */
+h1 + div[data-testid="stCaptionContainer"],
+.stCaption, [data-testid="stCaptionContainer"] {
+    color: var(--muted) !important;
+}
+
+/* Inline code / monospace */
+code, kbd, pre {
+    font-family: "JetBrains Mono", "Cascadia Code", Consolas, monospace;
+    font-size: .85rem;
+}
+
+/* --------------------------------------------------------- sidebar */
+section[data-testid="stSidebar"] {
+    background: #FFFFFF;
+    border-right: 1px solid var(--line);
+}
+
+section[data-testid="stSidebar"] > div {
+    padding-top: 1.2rem;
+}
+
+/* Sidebar section headings ("### 📄 Resume Builder") */
+section[data-testid="stSidebar"] h3 {
+    color: var(--accent);
+    font-weight: 700;
+    letter-spacing: .02em;
+    margin-bottom: .25rem;
+}
+
+/* Sidebar buttons: full-width, tidy */
+section[data-testid="stSidebar"] .stButton > button,
+section[data-testid="stSidebar"] .stDownloadButton > button {
+    width: 100%;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--line);
+    background: #FFFFFF;
+    color: var(--ink);
+    font-weight: 550;
+    padding: .45rem .75rem;
+    transition: all .15s ease-in-out;
+}
+
+section[data-testid="stSidebar"] .stButton > button:hover,
+section[data-testid="stSidebar"] .stDownloadButton > button:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: var(--accent-soft);
+}
+
+/* Sidebar tips block (markdown list) */
+section[data-testid="stSidebar"] ul {
+    padding-left: 1.1rem;
+    margin-top: .25rem;
+}
+section[data-testid="stSidebar"] li {
+    color: var(--muted);
+    font-size: .86rem;
+    line-height: 1.45;
+    margin-bottom: .15rem;
+}
+
+/* -------------------------------------------------------------- tabs */
+.stTabs [data-baseweb="tab-list"] {
+    gap: .25rem;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 0;
+}
+
+.stTabs [data-baseweb="tab"] {
+    height: 2.5rem;
+    padding: 0 .9rem;
+    font-weight: 600;
+    font-size: .92rem;
+    color: var(--muted);
+    background: transparent;
+    border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+    transition: color .15s ease;
+}
+
+.stTabs [data-baseweb="tab"]:hover {
+    color: var(--accent);
+    background: var(--accent-soft);
+}
+
+.stTabs [aria-selected="true"] {
+    color: var(--accent) !important;
+}
+
+/* The little accent bar under the active tab */
+.stTabs [data-baseweb="tab-highlight"] {
+    background-color: var(--accent);
+    height: 2px;
+}
+
+.stTabs [data-baseweb="tab-border"] {
+    background-color: var(--line);
+}
+
+/* ------------------------------------------------------- form inputs */
+.stTextInput input,
+.stTextArea textarea,
+.stNumberInput input,
+.stDateInput input {
+    font-size: .93rem;
+    border-radius: var(--radius-sm) !important;
+    border: 1px solid var(--line) !important;
+    background: #FFFFFF !important;
+    color: var(--ink) !important;
+    transition: border-color .15s ease, box-shadow .15s ease;
+}
+
+.stTextInput input:focus,
+.stTextArea textarea:focus,
+.stNumberInput input:focus {
+    border-color: var(--accent) !important;
+    box-shadow: 0 0 0 3px rgba(31, 78, 121, .12) !important;
+    outline: none !important;
+}
+
+.stTextInput input::placeholder,
+.stTextArea textarea::placeholder {
+    color: #9AA5B1 !important;
+}
+
+/* Labels */
+.stTextInput label,
+.stTextArea label,
+.stSelectbox label,
+.stCheckbox label,
+.stToggle label,
+.stSlider label,
+.stColorPicker label,
+.stFileUploader label {
+    font-size: .82rem !important;
+    font-weight: 600 !important;
+    color: var(--ink) !important;
+    letter-spacing: .005em;
+}
+
+/* Selectbox / multiselect */
+.stSelectbox div[data-baseweb="select"] > div {
+    border-radius: var(--radius-sm);
+    border-color: var(--line);
+    font-size: .92rem;
+}
+
+/* Slider accent */
+.stSlider [data-baseweb="slider"] [role="slider"] {
+    background-color: var(--accent) !important;
+    border-color: var(--accent) !important;
+}
+.stSlider [data-testid="stSliderTrack"] > div {
+    background: var(--accent) !important;
+}
+
+/* Checkbox / toggle accent */
+.stCheckbox input:checked + div,
+.stToggle [data-baseweb="checkbox"] div[aria-checked="true"] {
+    background-color: var(--accent) !important;
+    border-color: var(--accent) !important;
+}
+
+/* ---------------------------------------------------------- buttons */
+.stButton > button {
+    border-radius: var(--radius-sm);
+    font-weight: 600;
+    font-size: .9rem;
+    border: 1px solid var(--line);
+    background: #FFFFFF;
+    color: var(--ink);
+    transition: all .15s ease-in-out;
+}
+
+.stButton > button:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: var(--accent-soft);
+}
+
+/* Primary button (Download PDF) */
+.stDownloadButton > button[kind="primary"],
+.stButton > button[kind="primary"] {
+    background: var(--accent) !important;
+    border: 1px solid var(--accent) !important;
+    color: #FFFFFF !important;
+    font-weight: 650;
+    padding: .55rem 1rem;
+}
+
+.stDownloadButton > button[kind="primary"]:hover,
+.stButton > button[kind="primary"]:hover {
+    background: #17406A !important;
+    border-color: #17406A !important;
+    color: #FFFFFF !important;
+}
+
+.stDownloadButton > button:disabled,
+.stButton > button:disabled {
+    opacity: .55;
+    cursor: not-allowed;
+}
+
+/* Tiny "✕" remove buttons in entry cards */
+.stButton > button[key^="rm_"] {
+    padding: .1rem .5rem;
+    font-size: .8rem;
+    color: var(--muted);
+    border-color: var(--line);
+}
+.stButton > button[key^="rm_"]:hover {
+    color: #9B1C31;
+    border-color: #9B1C31;
+    background: #FDECEE;
+}
+
+/* ------------------------------------------------------- containers */
+/* st.container(border=True) - used for each experience/education card */
+div[data-testid="stVerticalBlockBorderWrapper"] {
+    border-radius: var(--radius) !important;
+    border: 1px solid var(--line) !important;
+    background: var(--bg-card);
+    box-shadow: var(--shadow);
+    padding: .5rem .25rem;
+    margin-bottom: .4rem;
+}
+
+/* Entry card headers ("Experience 1", "Project 2") */
+div[data-testid="stVerticalBlockBorderWrapper"] .stMarkdown strong {
+    color: var(--accent);
+    font-size: .95rem;
+}
+
+/* ---------------------------------------------------------- expander */
+.streamlit-expanderHeader,
+details summary {
+    font-weight: 600;
+    color: var(--ink);
+    border-radius: var(--radius-sm);
+}
+
+details[open] > summary {
+    color: var(--accent);
+}
+
+/* Resume check progress bar */
+.stProgress > div > div > div > div {
+    background: var(--accent);
+}
+
+/* ------------------------------------------------------- alerts/msgs */
 .stAlert {
-    border-radius: 5px;
+    border-radius: var(--radius-sm);
+    border-left-width: 4px;
 }
 
-/* Download link styling */
-a {
-    color: #4a90e2;
-    text-decoration: none;
-    font-weight: 500;
-    padding: 0.5rem 1rem;
-    background-color: #e8f1fc;
-    border-radius: 3px;
-    display: inline-block;
-    margin-top: 1rem;
-    transition: all 0.3s ease;
+/* "Removed characters" warning + "Resume loaded" success tweak */
+.stAlert[data-baseweb="notification"] {
+    font-size: .88rem;
 }
 
-a:hover {
-    background-color: #d4e3f7;
-    color: #3a7bc8;
+/* ------------------------------------------------------------ iframe */
+iframe {
+    border-radius: var(--radius);
+    border: 1px solid var(--line);
+    background: #FFFFFF;
+    box-shadow: var(--shadow);
+}
+
+/* ------------------------------------------------- preview caption */
+.preview-marker + div small,
+[data-testid="stCaptionContainer"] small {
+    color: var(--muted) !important;
+    font-size: .8rem;
+}
+
+/* The rendered PDF page images on the right */
+[data-testid="stImage"] img {
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--line);
+    box-shadow: var(--shadow);
+    background: #FFFFFF;
+    margin-bottom: .75rem;
+}
+
+/* --------------------------------------------------------- file picker */
+[data-testid="stFileUploader"] {
+    border-radius: var(--radius-sm);
+}
+[data-testid="stFileUploader"] section {
+    padding: .75rem;
+    border-radius: var(--radius-sm);
+    border: 1px dashed var(--line);
+    background: #FBFCFE;
+}
+[data-testid="stFileUploader"] section:hover {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+}
+
+/* -------------------------------------------------------------- misc */
+hr, [data-testid="stDivider"] {
+    border-color: var(--line);
+    opacity: .8;
+}
+
+/* Remove the Streamlit "Made with Streamlit" footer feel */
+footer { visibility: hidden; }
+
+/* Slightly smaller sidebar caption text ("Your data stays in...") */
+section[data-testid="stSidebar"] small {
+    color: #7B8794 !important;
+    font-size: .78rem;
+    line-height: 1.4;
+}
+
+/* Nice focus ring for accessibility */
+*:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    border-radius: 4px;
 }
