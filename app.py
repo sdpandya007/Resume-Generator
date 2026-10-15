@@ -1,333 +1,392 @@
-import streamlit as st
-from fpdf import FPDF
+from __future__ import annotations
+
 import base64
-import tempfile
-import os
-from PIL import Image
+import datetime
+import json
+import re
+from pathlib import Path
 
-# Custom CSS
-def local_css(file_name):
-    with open(file_name) as f:
-        st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
+import streamlit as st
 
-# Generate PDF with clickable links and borders
-def create_pdf(data, photo_path=None):
-    pdf = FPDF()
-    pdf.add_page()
-    
-    # Add page border
-    pdf.set_draw_color(100, 100, 100)  # Gray border
-    pdf.rect(5, 5, 200, 287)  # Page border
-    
-    # Header
-    pdf.set_font('Arial', 'B', 16)
-    pdf.cell(0, 10, "RESUME", ln=1, align='C')
-    pdf.ln(10)
-    
-    # Photo (top right corner)
-    if photo_path:
-        try:
-            pdf.image(photo_path, x=160, y=20, w=30, h=30)
-        except:
-            st.warning("Could not add photo to PDF")
-    
-    # Name and Title
-    pdf.set_font('Arial', 'B', 14)
-    pdf.cell(0, 7, data['name'], ln=1, align='C')
-    pdf.set_font('Arial', 'I', 12)
-    pdf.cell(0, 7, data['title'], ln=1, align='C')
-    pdf.ln(5)
-    
-    # Contact Information
-    pdf.set_font('Arial', '', 10)
-    pdf.cell(0, 5, data['address'], ln=2)
-    pdf.cell(0, 5, f"Mob No.: {data['phone']}", ln=1)
-    pdf.cell(0, 5, f"Email Id: {data['email']}", ln=1)
-    
-    # Website links with perfect spacing and alignment
-    pdf.set_font('Arial', '', 10)
-    labels = ["Website:", "Portfolio:", "GitHub:", "LinkedIn:"]
-    max_label_width = max(pdf.get_string_width(label) for label in labels) + 2
-    
-    if data.get('website'):
-        pdf.set_text_color(0, 0, 255)  # Blue color
-        pdf.cell(max_label_width, 5, "Website:", ln=0)
-        link = data['website'] if data['website'].startswith('http') else f'https://{data["website"]}'
-        pdf.cell(0, 5, f" {data['website']}", ln=1, link=link)
-        pdf.set_text_color(0)  # Reset to black
-        
-    if data.get('portfolio'):
-        pdf.set_text_color(0, 0, 255)
-        pdf.cell(max_label_width, 5, "Portfolio:", ln=0)
-        link = data['portfolio'] if data['portfolio'].startswith('http') else f'https://{data["portfolio"]}'
-        pdf.cell(0, 5, f" {data['portfolio']}", ln=1, link=link)
-        pdf.set_text_color(0)
-        
-    if data.get('github'):
-        pdf.set_text_color(0, 0, 255)
-        pdf.cell(max_label_width, 5, "GitHub:", ln=0)
-        link = data['github'] if data['github'].startswith('http') else f'https://{data["github"]}'
-        pdf.cell(0, 5, f" {data['github']}", ln=1, link=link)
-        pdf.set_text_color(0)
-        
-    if data.get('linkedin'):
-        pdf.set_text_color(0, 0, 255)
-        pdf.cell(max_label_width, 5, "LinkedIn:", ln=0)
-        link = data['linkedin'] if data['linkedin'].startswith('http') else f'https://{data["linkedin"]}'
-        pdf.cell(0, 5, f" {data['linkedin']}", ln=1, link=link)
-        pdf.set_text_color(0)
-    
-    pdf.ln(10)
-    
-    # Horizontal line
-    pdf.cell(0, 0, '', ln=1, border='T')
-    pdf.ln(10)
-    
-    # Career Objective
-    pdf.set_font('Arial', 'B', 12)
-    pdf.cell(0, 7, "CAREER OBJECTIVE", ln=1)
-    pdf.set_font('Arial', '', 10)
-    pdf.multi_cell(0, 5, data['objective'])
-    pdf.ln(10)
-    
-    # Academic Qualification
-    pdf.set_font('Arial', 'B', 12)
-    pdf.cell(0, 7, "ACADEMIC QUALIFICATION", ln=1)
-    pdf.set_font('Arial', '', 10)
-    
-    # Table header with borders
-    pdf.set_draw_color(0, 0, 0)  # Black for table
-    col_widths = [15, 45, 60, 20, 20]
-    headers = ["S.No.", "Qualification", "University/Board", "Year", "Per %"]
-    
-    for i, header in enumerate(headers):
-        pdf.cell(col_widths[i], 7, header, border=1)
-    pdf.ln()
-    
-    # Table rows with borders
-    for i, edu in enumerate(data['education']):
-        pdf.cell(col_widths[0], 7, str(i+1), border=1)
-        pdf.cell(col_widths[1], 7, edu['qualification'], border=1)
-        pdf.cell(col_widths[2], 7, edu['board'], border=1)
-        pdf.cell(col_widths[3], 7, edu['year'], border=1)
-        pdf.cell(col_widths[4], 7, edu['percentage'], border=1)
-        pdf.ln()
-    
-    pdf.ln(10)
-    
-    # Other Qualifications
-    if data['other_qualifications']:
-        pdf.set_font('Arial', 'B', 12)
-        pdf.cell(0, 7, "OTHER QUALIFICATION", ln=1)
-        pdf.set_font('Arial', '', 10)
-        for qual in data['other_qualifications'].split('\n'):
-            pdf.cell(0, 5, f"- {qual.strip()}", ln=1)
-        pdf.ln(10)
-    
-    # Work Experience
-    if data['experience']:
-        pdf.set_font('Arial', 'B', 12)
-        pdf.cell(0, 7, "WORK EXPERIENCE", ln=1)
-        pdf.set_font('Arial', '', 10)
-        for exp in data['experience'].split('\n'):
-            pdf.cell(0, 5, f"- {exp.strip()}", ln=1)
-        pdf.ln(10)
-    
-    # Personal Information
-    pdf.set_font('Arial', 'B', 12)
-    pdf.cell(0, 7, "PERSONAL INFORMATION", ln=1)
-    pdf.set_font('Arial', '', 10)
-    
-    personal_info = [
-        ("Father's Name", data['father_name']),
-        ("Date of Birth", data['dob']),
-        ("Language Known", data['languages']),
-        ("Gender", data['gender']),
-        ("Nationality", data['nationality']),
-        ("Marital Status", data['marital_status'])
-    ]
-    
-    for label, value in personal_info:
-        pdf.cell(50, 5, f"{label} :", ln=0)
-        pdf.cell(0, 5, value, ln=1)
-    
-    pdf.ln(15)
-    
-    # Declaration
-    pdf.set_font('Arial', 'B', 12)
-    pdf.cell(0, 7, "DECLARATION", ln=1)
-    pdf.set_font('Arial', '', 10)
-    pdf.multi_cell(0, 5, "I hereby declare that the above information given by me is true to best of my Knowledge.")
-    pdf.ln(10)
-    
-    # Right-aligned place and signature
-    pdf.set_font('Arial', '', 10)
-    pdf.cell(0, 5, f"Place: {data['place']}", ln=1, align='L')
-    pdf.set_font('Arial', 'B', 10)
-    pdf.cell(0, 5, f"({data['name']})", ln=1, align='R')
-    pdf.ln(15)
-    
-    return pdf
+import resume_pdf as rp
+from sample import SAMPLE
 
-def save_uploaded_file(uploaded_file):
+try:
+    import pypdfium2 as pdfium
+except Exception:  # preview falls back to an embedded PDF viewer
+    pdfium = None
+
+APP_DIR = Path(__file__).parent
+st.set_page_config(page_title="Resume Builder", page_icon="📄", layout="wide")
+
+TODAY = datetime.date.today().strftime("%d %b %Y")
+SS = st.session_state
+
+# --------------------------------------------------------------------------- #
+# State model
+# --------------------------------------------------------------------------- #
+SIMPLE_DEFAULTS = {
+    "name": "", "title": "", "email": "", "phone": "", "address": "",
+    "linkedin": "", "github": "", "portfolio": "", "website": "",
+    "summary_heading": "Professional Summary", "summary": "",
+    "skills": "", "certifications": "", "achievements": "", "languages": "",
+    "show_personal": False, "father_name": "", "dob": "", "gender": "",
+    "marital_status": "", "nationality": "",
+    "show_declaration": False, "place": "", "decl_date": TODAY,
+}
+ENTRY = {
+    "exp": {"role": "", "company": "", "location": "", "start": "", "end": "", "current": False, "bullets": ""},
+    "edu": {"degree": "", "institution": "", "year": "", "score": ""},
+    "proj": {"name": "", "tech": "", "link": "", "desc": ""},
+}
+ENTRY_JSON_KEY = {"exp": "experience", "edu": "education", "proj": "projects"}
+OPTIONS = {
+    "gender": ["", "Male", "Female", "Other"],
+    "marital_status": ["", "Unmarried", "Married", "Other"],
+    "summary_heading": ["Professional Summary", "Career Objective", "Profile"],
+}
+
+
+def init_state():
+    for k, v in SIMPLE_DEFAULTS.items():
+        SS.setdefault(k, v)
+    SS.setdefault("n_exp", 1)
+    SS.setdefault("n_edu", 1)
+    SS.setdefault("n_proj", 0)
+    SS.setdefault("opt_template", "Modern")
+    SS.setdefault("opt_accent_name", "Navy")
+    SS.setdefault("opt_accent_custom", "#1F4E79")
+    SS.setdefault("opt_paper", "A4")
+    SS.setdefault("opt_scale", 1.0)
+    SS.setdefault("opt_fit", True)
+    SS.setdefault("opt_order", "Experienced")
+
+
+def _clear_entry_keys():
+    for k in list(SS.keys()):
+        if re.match(r"^(exp|edu|proj)_\d+_", k):
+            del SS[k]
+
+
+def load_data(d: dict):
+    _clear_entry_keys()
+    for k, default in SIMPLE_DEFAULTS.items():
+        v = d.get(k, default)
+        if k in OPTIONS and v not in OPTIONS[k]:
+            v = OPTIONS[k][0]
+        SS[k] = bool(v) if isinstance(default, bool) else str(v if v is not None else "")
+    if not SS["decl_date"]:
+        SS["decl_date"] = TODAY
+    for kind, fields in ENTRY.items():
+        items = d.get(ENTRY_JSON_KEY[kind], []) or []
+        SS[f"n_{kind}"] = len(items)
+        for i, item in enumerate(items):
+            for f, dv in fields.items():
+                v = item.get(f, dv)
+                SS[f"{kind}_{i}_{f}"] = bool(v) if isinstance(dv, bool) else str(v or "")
+
+
+def collect() -> dict:
+    data = {k: SS.get(k, v) for k, v in SIMPLE_DEFAULTS.items()}
+    for kind, fields in ENTRY.items():
+        items = []
+        for i in range(SS.get(f"n_{kind}", 0)):
+            item = {f: SS.get(f"{kind}_{i}_{f}", dv) for f, dv in fields.items()}
+            if any(bool(v) and str(v).strip() for f, v in item.items() if f != "current") :
+                items.append(item)
+        data[ENTRY_JSON_KEY[kind]] = items
+    return data
+
+
+def add_entry(kind):
+    SS[f"n_{kind}"] = SS.get(f"n_{kind}", 0) + 1
+
+
+def remove_entry(kind, idx):
+    n = SS.get(f"n_{kind}", 0)
+    for j in range(idx, n - 1):
+        for f, dv in ENTRY[kind].items():
+            SS[f"{kind}_{j}_{f}"] = SS.get(f"{kind}_{j + 1}_{f}", dv)
+    for f in ENTRY[kind]:
+        SS.pop(f"{kind}_{n - 1}_{f}", None)
+    SS[f"n_{kind}"] = max(0, n - 1)
+
+
+def load_sample():
+    load_data(SAMPLE)
+
+
+def reset_all():
+    for k in list(SS.keys()):
+        del SS[k]
+
+
+def load_uploaded():
+    f = SS.get("json_up")
+    if not f:
+        return
     try:
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".jpg") as tmp_file:
-            img = Image.open(uploaded_file)
-            if img.mode in ("RGBA", "P"):
-                img = img.convert("RGB")
-            img.save(tmp_file.name, "JPEG", quality=90)
-            return tmp_file.name
-    except Exception as e:
-        st.error(f"Error processing image: {e}")
-        return None
+        load_data(json.loads(f.getvalue().decode("utf-8")))
+        SS["_load_msg"] = ("success", "Saved resume loaded.")
+    except Exception:
+        SS["_load_msg"] = ("error", "That file is not a valid saved resume (.json).")
 
-def main():
-    # Load CSS
-    local_css("style.css")
-    
-    st.title("Professional Resume Generator")
-    st.markdown("Fill in your details below to generate a professional one-page resume in PDF format.")
-    
-    with st.form("resume_form"):
-        st.header("Personal Information")
-        name = st.text_input("Full Name*", placeholder="Ankita Kumari")
-        title = st.text_input("Job Title*", placeholder="Computer Operator")
-        
-        col1, col2 = st.columns(2)
-        with col1:
-            phone = st.text_input("Phone Number*", placeholder="+91 1234567890")
-        with col2:
-            email = st.text_input("Email*", placeholder="sachinkumar@gmail.com")
-        
-        address = st.text_area("Full Address*", placeholder="P - 171 Gali No. 5\nBajjeet Nagar, Patel Nagar\nNew Delhi - 110008")
-        
-        # Website Links with validation
-        st.header("Website Links (Optional)")
-        col1, col2, col3, col4 = st.columns(4)
-        with col1:
-            website = st.text_input("Personal Website", placeholder="yourwebsite.com", 
-                                  help="Enter without https:// (e.g., yourwebsite.com)")
-        with col2:
-            portfolio = st.text_input("Portfolio", placeholder="yourportfolio.com", 
-                                   help="Enter without https:// (e.g., yourportfolio.com)")
-        with col3:
-            github = st.text_input("GitHub", placeholder="github.com/username", 
-                                 help="Enter without https:// (e.g., github.com/username)")
-        with col4:
-            linkedin = st.text_input("LinkedIn", placeholder="linkedin.com/in/username", 
-                                   help="Enter without https:// (e.g., linkedin.com/in/username)")
-        
-        # Photo Upload (optional)
-        st.header("Passport Size Photo (Optional)")
-        photo = st.file_uploader("Upload passport photo (2x2 inches, JPG/PNG)", 
-                               type=["jpg", "jpeg", "png"])
-        
-        st.header("Career Objective")
-        objective = st.text_area("Objective*", 
-                               placeholder="To make contribution in the organization with best of my ability...")
-        
-        st.header("Education")
-        education = []
-        with st.expander("Add Education Details"):
-            num_education = st.number_input("Number of Education Entries", min_value=1, max_value=5, value=3)
-            
-            for i in range(num_education):
-                st.subheader(f"Education {i+1}")
-                col1, col2, col3, col4 = st.columns(4)
-                with col1:
-                    qualification = st.text_input(f"Qualification {i+1}", key=f"qual_{i}", placeholder="10th")
-                with col2:
-                    board = st.text_input(f"Board/University {i+1}", key=f"board_{i}", placeholder="CBSE Board")
-                with col3:
-                    year = st.text_input(f"Year {i+1}", key=f"year_{i}", placeholder="2014")
-                with col4:
-                    percentage = st.text_input(f"Percentage {i+1}", key=f"per_{i}", placeholder="82%")
-                
-                education.append({
-                    'qualification': qualification,
-                    'board': board,
-                    'year': year,
-                    'percentage': percentage
-                })
-        
-        st.header("Other Qualifications")
-        other_qualifications = st.text_area("List your other qualifications (one per line)", 
-                                          placeholder="Basic Knowledge of Computer\nAdv. Microsoft Excel")
-        
-        st.header("Work Experience")
-        experience = st.text_area("Describe your work experience (one per line)", 
-                                placeholder="2 Years of Experience as a Computer Operator in XYZ Pvt. Ltd Company")
-        
-        st.header("Personal Details")
-        col1, col2 = st.columns(2)
-        with col1:
-            father_name = st.text_input("Father's Name", placeholder="Pramod Kumar")
-            dob = st.text_input("Date of Birth", placeholder="1999-08-07")
-            gender = st.selectbox("Gender", ["Female", "Male", "Other"])
-        with col2:
-            languages = st.text_input("Languages Known", placeholder="Hindi And English")
-            nationality = st.text_input("Nationality", placeholder="Indian")
-            marital_status = st.selectbox("Marital Status", ["Unmarried", "Married", "Other"])
-        
-        place = st.text_input("Place*", placeholder="New Delhi")
-        
-        # Form submission
-        submitted = st.form_submit_button("Generate Resume")
-        
-        if submitted:
-            if not name or not title or not phone or not email or not address or not objective or not place:
-                st.error("Please fill in all required fields (marked with *)")
-            else:
-                # Ensure links have proper format
-                website = f"https://{website}" if website and not website.startswith(('http://', 'https://')) else website
-                portfolio = f"https://{portfolio}" if portfolio and not portfolio.startswith(('http://', 'https://')) else portfolio
-                github = f"https://{github}" if github and not github.startswith(('http://', 'https://')) else github
-                linkedin = f"https://{linkedin}" if linkedin and not linkedin.startswith(('http://', 'https://')) else linkedin
-                
-                resume_data = {
-                    'name': name,
-                    'title': title,
-                    'phone': phone,
-                    'email': email,
-                    'address': address,
-                    'website': website,
-                    'portfolio': portfolio,
-                    'github': github,
-                    'linkedin': linkedin,
-                    'objective': objective,
-                    'education': education,
-                    'other_qualifications': other_qualifications,
-                    'experience': experience,
-                    'father_name': father_name,
-                    'dob': dob,
-                    'languages': languages,
-                    'gender': gender,
-                    'nationality': nationality,
-                    'marital_status': marital_status,
-                    'place': place
-                }
-                
-                # Process photo if provided
-                photo_path = save_uploaded_file(photo) if photo else None
-                
-                # Generate PDF
-                pdf = create_pdf(resume_data, photo_path)
-                
-                # Save to a temporary file
-                with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmpfile:
-                    pdf.output(tmpfile.name)
-                
-                # Display download link
-                with open(tmpfile.name, "rb") as f:
-                    base64_pdf = base64.b64encode(f.read()).decode('utf-8')
-                    download_link = f'<a href="data:application/octet-stream;base64,{base64_pdf}" download="{name}_Resume.pdf">Download Your Resume</a>'
-                    st.markdown(download_link, unsafe_allow_html=True)
-                    st.success("Resume generated successfully!")
-                
-                # Clean up temporary files
-                os.unlink(tmpfile.name)
-                if photo_path:
-                    os.unlink(photo_path)
 
-if __name__ == "__main__":
-    main()
+# --------------------------------------------------------------------------- #
+# Review / ATS checks
+# --------------------------------------------------------------------------- #
+EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[A-Za-z]{2,}$")
+
+
+def review(data: dict, pages: int, photo_used: bool):
+    """Return list of (ok: bool, message)."""
+    checks = []
+    checks.append((bool(data["name"].strip()), "Full name added"))
+    checks.append((bool(data["title"].strip()), "Professional title added (recruiters scan this first)"))
+    checks.append((bool(EMAIL_RE.match(data["email"].strip())), "Valid e-mail address"))
+    digits = re.sub(r"\D", "", data["phone"])
+    checks.append((len(digits) >= 8, "Phone number added"))
+    words = len(data["summary"].split())
+    checks.append((20 <= words <= 80, f"Summary of 20-80 words (currently {words})"))
+    checks.append((bool(rp.lines(data["skills"])), "Skills listed (ATS matches keywords from the job post)"))
+    exp = data["experience"]
+    if exp:
+        checks.append((all(len(rp.lines(e["bullets"])) >= 2 for e in exp), "Every job has at least 2 achievement bullets"))
+        checks.append((any(re.search(r"\d", e["bullets"]) for e in exp), "Achievements include numbers (%, \u20b9, users, time saved)"))
+    checks.append((bool(data["education"]), "Education added"))
+    checks.append((any(data[k].strip() for k in ("linkedin", "github", "portfolio", "website")), "At least one professional link"))
+    checks.append((pages <= 1, "Fits on one page" if pages <= 1 else f"Resume runs to {pages} pages - trim older/less relevant items"))
+    return checks
+
+
+# --------------------------------------------------------------------------- #
+# UI helpers
+# --------------------------------------------------------------------------- #
+def local_css(name: str):
+    css = (APP_DIR / name).read_text(encoding="utf-8")
+    st.markdown(f"<style>{css}</style>", unsafe_allow_html=True)
+
+
+def entries_ui(kind: str, label: str, render, add_label: str):
+    for i in range(SS.get(f"n_{kind}", 0)):
+        with st.container(border=True):
+            h1, h2 = st.columns([8, 1])
+            h1.markdown(f"**{label} {i + 1}**")
+            h2.button("✕", key=f"rm_{kind}_{i}", help="Remove this entry", on_click=remove_entry, args=(kind, i))
+            render(i)
+    st.button(add_label, key=f"add_{kind}", on_click=add_entry, args=(kind,))
+
+
+def render_exp(i):
+    k = lambda f: f"exp_{i}_{f}"
+    c1, c2 = st.columns(2)
+    c1.text_input("Job title", key=k("role"), placeholder="e.g., Marketing Executive")
+    c2.text_input("Company", key=k("company"), placeholder="e.g., Tata Consultancy Services")
+    c1, c2, c3, c4 = st.columns([2, 2, 2, 2])
+    c1.text_input("Location", key=k("location"), placeholder="City")
+    c2.text_input("Start", key=k("start"), placeholder="Jan 2022")
+    c3.text_input("End", key=k("end"), placeholder="Dec 2024", disabled=SS.get(k("current"), False))
+    c4.checkbox("Currently working here", key=k("current"))
+    st.text_area(
+        "Achievements / responsibilities (one per line)", key=k("bullets"), height=130,
+        placeholder="Increased monthly leads by 35% through targeted email campaigns\nManaged a team of 4 and a ₹12L annual budget",
+        help="Start with an action verb (Led, Built, Reduced...) and add numbers wherever possible.",
+    )
+
+
+def render_edu(i):
+    k = lambda f: f"edu_{i}_{f}"
+    c1, c2, c3, c4 = st.columns([3, 4, 1.4, 2])
+    c1.text_input("Qualification", key=k("degree"), placeholder="B.Com / 12th / 10th")
+    c2.text_input("Institution / Board", key=k("institution"), placeholder="University / CBSE Board")
+    c3.text_input("Year", key=k("year"), placeholder="2022")
+    c4.text_input("Score", key=k("score"), placeholder="8.2 CGPA / 82%")
+
+
+def render_proj(i):
+    k = lambda f: f"proj_{i}_{f}"
+    c1, c2 = st.columns(2)
+    c1.text_input("Project name", key=k("name"), placeholder="e.g., Online Store")
+    c2.text_input("Technologies / tools", key=k("tech"), placeholder="Python, MySQL")
+    st.text_input("Link (optional)", key=k("link"), placeholder="github.com/you/project")
+    st.text_area("What it does / your impact (one per line)", key=k("desc"), height=90)
+
+
+# --------------------------------------------------------------------------- #
+# Main
+# --------------------------------------------------------------------------- #
+init_state()
+local_css("style.css")
+
+# ----- Sidebar ---------------------------------------------------------------
+with st.sidebar:
+    st.markdown("### 📄 Resume Builder")
+    st.caption("ATS-friendly PDF resumes in minutes.")
+    st.button("✨ Fill with sample data", on_click=load_sample, help="See how a finished resume looks, then edit it.")
+    st.button("🗑 Clear everything", on_click=reset_all)
+    st.divider()
+    st.markdown("**Save your progress**")
+    st.download_button(
+        "💾 Save as .json", json.dumps(collect(), indent=2, ensure_ascii=False),
+        file_name="my_resume_data.json", mime="application/json",
+    )
+    st.file_uploader("Load saved progress", type="json", key="json_up", on_change=load_uploaded)
+    if "_load_msg" in SS:
+        kind, msg = SS.pop("_load_msg")
+        getattr(st, kind)(msg)
+    st.divider()
+    st.markdown(
+        "**Tips that get interviews**\n"
+        "- Tailor skills to each job post\n"
+        "- Quantify results (%, ₹, time saved)\n"
+        "- Keep it to 1 page (2 if 8+ years)\n"
+        "- Use a professional e-mail address\n"
+        "- Send as PDF, name it *YourName_Resume.pdf*"
+    )
+    st.caption("Your data stays in your browser session - nothing is stored on a server.")
+
+st.title("Professional Resume Builder")
+st.caption("Fill the tabs on the left - the preview on the right updates as you type.")
+
+left, right = st.columns([1.1, 1], gap="large")
+
+# ----- Left: editor ------------------------------------------------------------
+with left:
+    t_basic, t_exp, t_edu, t_skill, t_extra, t_design = st.tabs(
+        ["👤 Basics", "💼 Experience", "🎓 Education", "🛠 Skills & Projects", "📋 Personal", "🎨 Design"]
+    )
+
+    with t_basic:
+        c1, c2 = st.columns(2)
+        c1.text_input("Full name *", key="name", placeholder="e.g., Priya Sharma")
+        c2.text_input("Professional title *", key="title", placeholder="e.g., Senior Accountant")
+        c1, c2 = st.columns(2)
+        c1.text_input("Phone *", key="phone", placeholder="+91 98765 43210")
+        c2.text_input("E-mail *", key="email", placeholder="priya.sharma@gmail.com")
+        st.text_area("Address", key="address", height=80, placeholder="City, State, Country (full street address is optional)")
+        st.markdown("**Links** (optional - enter without `https://`)")
+        c1, c2 = st.columns(2)
+        c1.text_input("LinkedIn", key="linkedin", placeholder="linkedin.com/in/username")
+        c2.text_input("GitHub", key="github", placeholder="github.com/username")
+        c1.text_input("Portfolio", key="portfolio", placeholder="yourportfolio.com")
+        c2.text_input("Website", key="website", placeholder="yourwebsite.com")
+        st.selectbox("Summary heading", OPTIONS["summary_heading"], key="summary_heading",
+                     help="Freshers often prefer 'Career Objective'.")
+        st.text_area("Summary", key="summary", height=120,
+                     placeholder="2-3 sentences: who you are, your strongest skills, and what you want next.")
+        st.caption(f"{len(SS.get('summary', '').split())} words - aim for 30-60.")
+        st.file_uploader(
+            "Photo (optional)", type=["jpg", "jpeg", "png"], key="photo",
+            help="Common in India, Middle East and parts of Europe. Leave empty for US/UK/Canada applications.",
+        )
+
+    with t_exp:
+        st.caption("Most recent job first. Freshers can skip this tab and switch the layout in **Design**.")
+        entries_ui("exp", "Experience", render_exp, "➕ Add experience")
+
+    with t_edu:
+        entries_ui("edu", "Education", render_edu, "➕ Add education")
+        st.text_area("Certifications & training (one per line)", key="certifications", height=100,
+                     placeholder="AWS Certified Cloud Practitioner (2023)\nAdvanced Excel - Coursera (2022)")
+
+    with t_skill:
+        st.text_area(
+            "Skills (one group per line)", key="skills", height=120,
+            placeholder="Languages: Python, SQL\nTools: Excel, Tally, Power BI\nSoft skills: Communication, Teamwork",
+            help="Use 'Category: item, item' for grouped skills, or just one skill list per line.",
+        )
+        st.markdown("**Projects** (optional)")
+        entries_ui("proj", "Project", render_proj, "➕ Add project")
+        st.text_area("Achievements & activities (one per line)", key="achievements", height=90,
+                     placeholder="Winner, Inter-college Hackathon 2023")
+
+    with t_extra:
+        st.caption("Common on Indian resumes. Switch it off for most international applications.")
+        st.toggle("Include personal details section", key="show_personal")
+        if SS.get("show_personal"):
+            c1, c2 = st.columns(2)
+            c1.text_input("Father's name", key="father_name")
+            c2.text_input("Date of birth", key="dob", placeholder="07 Aug 1999")
+            c1.selectbox("Gender", OPTIONS["gender"], key="gender", format_func=lambda x: x or "- not shown -")
+            c2.selectbox("Marital status", OPTIONS["marital_status"], key="marital_status",
+                         format_func=lambda x: x or "- not shown -")
+            c1.text_input("Nationality", key="nationality", placeholder="Indian")
+        st.text_input("Languages known", key="languages", placeholder="English, Hindi, Gujarati")
+        st.toggle("Include declaration & signature block", key="show_declaration")
+        if SS.get("show_declaration"):
+            c1, c2 = st.columns(2)
+            c1.text_input("Place", key="place", placeholder="Mumbai")
+            c2.text_input("Date", key="decl_date")
+
+    with t_design:
+        st.selectbox("Template", list(rp.TEMPLATES), key="opt_template")
+        st.caption(rp.TEMPLATES[SS["opt_template"]]["about"])
+        names = list(rp.ACCENT_PRESETS) + ["Custom"]
+        st.selectbox("Accent colour", names, key="opt_accent_name")
+        if SS["opt_accent_name"] == "Custom":
+            st.color_picker("Pick colour", key="opt_accent_custom")
+        c1, c2 = st.columns(2)
+        c1.selectbox("Paper size", list(rp.PAGE_SIZES), key="opt_paper")
+        c2.selectbox("Layout", ["Experienced", "Fresher"], key="opt_order",
+                     help="Experienced: work history first. Fresher: education first.")
+        st.slider("Text size", 0.85, 1.15, key="opt_scale", step=0.05)
+        st.toggle("Shrink to fit on one page", key="opt_fit",
+                  help="Automatically reduces spacing/text size (down to about 76%) if content overflows.")
+
+# ----- Right: preview & download -----------------------------------------------
+data = collect()
+accent = rp.ACCENT_PRESETS.get(SS["opt_accent_name"]) or SS["opt_accent_custom"]
+
+photo_bytes = None
+up = SS.get("photo")
+if up is not None:
+    try:
+        photo_bytes = rp.process_photo(up.getvalue())
+    except Exception:
+        st.sidebar.error("Could not read that photo - try a different JPG/PNG.")
+
+try:
+    pdf_bytes, pages, used_scale = rp.build_resume(
+        data, template=SS["opt_template"], accent=accent, paper=SS["opt_paper"],
+        font_scale=SS["opt_scale"], fit_one_page=SS["opt_fit"], order=SS["opt_order"], photo=photo_bytes,
+    )
+    build_error = None
+except Exception as e:  # never crash the app on odd input
+    pdf_bytes, pages, used_scale, build_error = b"", 1, 1.0, e
+
+with right:
+    st.markdown('<div class="preview-marker"></div>', unsafe_allow_html=True)
+    if build_error:
+        st.error(f"Could not build the PDF: {build_error}")
+    else:
+        safe = re.sub(r"[^A-Za-z0-9]+", "_", data["name"]).strip("_") or "My"
+        ready = bool(data["name"].strip())
+        st.download_button(
+            "⬇ Download PDF resume", pdf_bytes, file_name=f"{safe}_Resume.pdf", mime="application/pdf",
+            type="primary", disabled=not ready, help=None if ready else "Enter your name first",
+        )
+        info = f"{pages} page{'s' if pages != 1 else ''}"
+        if used_scale < SS["opt_scale"]:
+            info += f" · auto-shrunk to {int(used_scale * 100)}% to fit"
+        st.caption(info)
+
+        checks = review(data, pages, photo_bytes is not None)
+        passed = sum(ok for ok, _ in checks)
+        with st.expander(f"Resume check - {passed}/{len(checks)} passed", expanded=False):
+            st.progress(passed / len(checks))
+            for ok, msg in checks:
+                st.markdown(f"{'✅' if ok else '⚠️'} {msg}")
+        bad = rp.find_unsupported(data)
+        if bad:
+            st.warning("These characters can't be printed in the PDF and were removed: " + " ".join(bad[:15]))
+
+        if pdfium is not None:
+            pdf_doc = pdfium.PdfDocument(pdf_bytes)
+            for i in range(len(pdf_doc)):
+                st.image(pdf_doc[i].render(scale=1.6).to_pil())
+        else:
+            b64 = base64.b64encode(pdf_bytes).decode()
+            st.markdown(
+                f'<iframe src="data:application/pdf;base64,{b64}" width="100%" height="900" style="border:0"></iframe>',
+                unsafe_allow_html=True,
+            )
