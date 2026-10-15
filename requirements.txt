@@ -1,3 +1,4 @@
 streamlit
-fpdf2
-Pillow
+reportlab
+pillow
+pypdfium2
