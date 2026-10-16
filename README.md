@@ -1,198 +1,108 @@
 # 📄 Resume Builder
 
-A Streamlit web app that builds **ATS-friendly, text-based PDF resumes** in minutes.
-Fill in the tabs on the left, watch the live preview on the right, and download a
-polished one-page PDF — all running locally in your browser session.
+A Streamlit web app that turns a simple form into a clean, professional, **ATS-friendly PDF resume**, with a live preview that updates as you type.
 
----
+## Features
 
-## ✨ Features
+- **Live preview** next to the editor, with one-click PDF download
+- **3 templates**: Modern (colour header band), Professional (accent rule), Classic (serif, centred)
+- **Accent colours**: 6 presets plus a custom colour picker
+- **Experienced / Fresher layouts**: work history first, or education first
+- **Shrink to fit one page**: spacing and text size reduce automatically if content overflows
+- **Sections**: summary/objective, skills, work experience, projects, education table, certifications, achievements, languages
+- **Personal details and declaration block** (optional, common on Indian resumes)
+- **Clickable links** for e-mail, LinkedIn, GitHub, portfolio and website
+- **Optional photo**, auto square-cropped
+- **Resume check**: a checklist covering name, valid e-mail, summary length, achievement bullets with numbers, links and page count
+- **Save / load progress** as a `.json` file
+- **Sample data** button to see a finished resume instantly
+- Text-based PDF, single column: readable by Applicant Tracking Systems (ATS)
 
-- **Live preview** — the PDF on the right updates as you type.
-- **3 templates** — Modern (coloured header band), Professional (left-aligned
-  with accent rule), Classic (serif, centred header for law/finance/academia).
-- **6 accent colours** + custom colour picker.
-- **A4 & Letter** paper sizes.
-- **Auto-fit to one page** — automatically shrinks spacing and text size
-  (down to ~76%) if content overflows.
-- **Fresher / Experienced layouts** — reorder sections to put education first
-  or work history first.
-- **Clickable links** — e-mail, LinkedIn, GitHub, portfolio, and website are
-  embedded as real hyperlinks in the PDF.
-- **Photo support** (optional) — auto-cropped square, top-biased for portraits.
-- **ATS-friendly** — text-based, single-column layouts, standard section
-  headings, keyword matching hints.
-- **Resume check** — a built-in checklist (name, contact, summary length,
-  quantified achievements, one-page fit, etc.) with a pass score.
-- **Personal details & declaration blocks** — common on Indian / Middle East
-  resumes, easily toggled off for US/UK/Canada applications.
-- **Save / load progress** — export your data as `.json` and reload it later.
-- **Character sanitizer** — flags and strips characters the built-in PDF fonts
-  can't print, so you never see black boxes.
-- **No server storage** — everything stays in your Streamlit session.
+## Project structure
 
----
+```
+resume_generator/
+├── app.py            # Streamlit UI (tabs, state, preview, download)
+├── resume_pdf.py     # PDF engine (ReportLab): templates, layout, page fitting
+├── sample.py         # Sample resume data
+├── style.css         # Page styling (sticky preview, buttons, etc.)
+├── requirements.txt
+└── .streamlit/
+    └── config.toml   # Theme
+```
 
-## 🗂 Project structure
-.
-├── app.py # Streamlit UI + state management
-├── resume_pdf.py # PDF engine (ReportLab)
-├── sample.py # Sample data ("✨ Fill with sample data")
-├── style.css # Custom styling for the Streamlit UI
-├── requirements.txt # Python dependencies
-└── README.md
+## Getting started
 
-text
-
----
-
-## 🚀 Getting started
-
-### 1. Requirements
-
-- Python **3.9+** (3.10 or 3.11 recommended)
-- pip
-
-### 2. Install dependencies
+Requires **Python 3.9+**.
 
 ```bash
+# 1. (optional) create a virtual environment
+python -m venv venv
+source venv/bin/activate        # Windows: venv\Scripts\activate
+
+# 2. install dependencies
 pip install -r requirements.txt
-If you don't have a requirements.txt yet, create one with:
 
-txt
-streamlit
-reportlab
-pillow
-pypdfium2
-pypdfium2 is optional — app.py falls back to an embedded PDF viewer
-(iframe) if it isn't installed, but the in-app preview is nicer with it.
-
-3. Run the app
-bash
+# 3. run
 streamlit run app.py
-Then open the URL Streamlit prints (usually http://localhost:8501).
+```
 
-🧭 How to use
-Start with sample data (optional) — click ✨ Fill with sample data in
-the sidebar to see a finished resume, then edit it.
+The app opens at <http://localhost:8501>.
 
-Fill the tabs on the left:
+## How to use
 
-👤 Basics — name, title, phone, e-mail, address, links, summary, photo.
+1. Click **Fill with sample data** in the sidebar to see how it works, or start typing in the tabs.
+2. Work through **Basics → Experience → Education → Skills & Projects → Personal → Design**.
+3. Watch the preview on the right and open **Resume check** for improvement tips.
+4. Click **Download PDF resume**.
+5. Use **Save as .json** to continue editing later (upload it via *Load saved progress*).
 
-💼 Experience — most recent job first; one achievement per line.
+## Tips for a resume that gets interviews
 
-🎓 Education — qualification, institution, year, score; plus
-certifications.
+- Tailor the **Skills** section to keywords in each job post
+- Start bullets with action verbs and **add numbers** (e.g. "Reduced load time by 45%")
+- Keep it to **one page** unless you have 8+ years of experience
+- Skip the photo and personal-details section for US/UK/Canada applications
+- Use a professional e-mail address and name the file `YourName_Resume.pdf`
 
-🛠 Skills & Projects — grouped skills (Category: item, item) and
-optional project entries.
+## Deployment
 
-📋 Personal — optional personal details, languages, declaration block.
+**Streamlit Community Cloud**
 
-🎨 Design — template, accent colour, paper size, layout order, text
-size, fit-to-one-page.
+1. Push this folder to a GitHub repository.
+2. Go to <https://share.streamlit.io>, choose the repo, and set the main file to `app.py`.
 
-Watch the preview on the right and the Resume check score.
+**Docker (example)**
 
-Download the PDF — it's named YourName_Resume.pdf.
+```dockerfile
+FROM python:3.11-slim
+WORKDIR /app
+COPY . .
+RUN pip install --no-cache-dir -r requirements.txt
+EXPOSE 8501
+CMD ["streamlit", "run", "app.py", "--server.address=0.0.0.0"]
+```
 
-Save your progress as .json from the sidebar if you want to come back
-later.
+## Customisation
 
-📝 Tips that get interviews
-Tailor skills to each job post — ATS matches keywords.
+| Want to change | Where |
+|---|---|
+| Add an accent colour | `ACCENT_PRESETS` in `resume_pdf.py` |
+| Add or edit a template | `TEMPLATES` in `resume_pdf.py` (header styles: `band`, `left`, `center`) |
+| Add a new section | Add a builder in `_build_story` and include it in the section order list, then add inputs in `app.py` |
+| Change the app look | `style.css` and `.streamlit/config.toml` |
+| Change the sample resume | `sample.py` |
 
-Quantify results: %, ₹, users, time saved, revenue.
+## Known limitations
 
-Keep it to 1 page (2 if you have 8+ years of experience).
+- PDFs use built-in fonts (Helvetica / Times), which cover Latin characters only. Other scripts (e.g. Hindi, Chinese) and the ₹ symbol in PDF text are not supported; `₹` is converted to `Rs.` and unsupported characters are removed, with a warning shown in the app. To support other scripts, register a Unicode TTF font (e.g. Noto Sans) with ReportLab.
+- PDF output only (no Word/DOCX export).
+- Data lives only in the browser session; nothing is stored on a server.
 
-Use a professional e-mail address.
+## Tech stack
 
-Name the file YourName_Resume.pdf, not resume_final_v3.pdf.
+[Streamlit](https://streamlit.io) · [ReportLab](https://www.reportlab.com/) · [Pillow](https://python-pillow.org/) · [pypdfium2](https://github.com/pypdfium2-team/pypdfium2) (preview rendering)
 
-For US / UK / Canada applications: turn off Personal details,
-Declaration, and leave the photo empty.
+## License
 
-For India / Middle East applications: photo, personal details, and
-declaration are common and can be left on.
-
-🎨 Templates
-Template	Font	Header	Best for
-Modern	Helvetica	Coloured band	Tech, startups, product, design
-Professional	Helvetica	Left-aligned with accent rule	Any industry — safe default
-Classic	Times	Centred	Law, finance, government, academia
-Accent presets: Navy, Teal, Crimson, Forest, Purple, Charcoal — or pick your own.
-
-🧩 Section order
-Experienced layout:
-Summary → Skills → Experience → Projects → Education → Certifications → Achievements → Languages → Personal → Declaration
-
-Fresher layout:
-Summary → Education → Skills → Projects → Experience → Certifications → Achievements → Languages → Personal → Declaration
-
-Switch between them in the 🎨 Design tab.
-
-🔒 Privacy
-Everything runs locally. Your data is kept only in your Streamlit session
-(st.session_state) — nothing is written to disk or sent to a server. The
-.json save file is generated in your browser and downloaded directly.
-
-🛠 Troubleshooting
-FileNotFoundError: style.css
-Make sure style.css exists next to app.py. If you don't want to use it,
-patch local_css in app.py to skip missing files:
-
-python
-def local_css(name: str):
-    path = APP_DIR / name
-    if not path.exists():
-        return
-    css = path.read_text(encoding="utf-8")
-    st.markdown(f"<style>{css}</style>", unsafe_allow_html=True)
-Black boxes in the PDF
-The built-in PDF fonts (Helvetica / Times) only cover Latin-1 / cp1252. The
-app already swaps common symbols (₹ → Rs., → arrows, etc.) and warns you
-about anything else it had to drop. Stick to English characters for best
-results.
-
-Preview is blank / shows an iframe instead of pages
-Install pypdfium2:
-
-bash
-pip install pypdfium2
-Photo doesn't appear
-Use a JPG or PNG. The image is auto-cropped square and converted to JPEG.
-
-"Resume runs to 2 pages" warning
-Either trim older/less relevant items, or make sure Shrink to fit on one page
-is enabled in the 🎨 Design tab.
-
-📦 Dependencies
-Package	Purpose
-streamlit	Web UI
-reportlab	PDF generation
-pillow	Photo cropping / resizing
-pypdfium2	In-app PDF page preview (optional)
-📄 License
-Add your preferred license here (MIT, Apache-2.0, etc.).
-The sample data in sample.py is fictional and for demonstration only.
-
-🙌 Contributing
-Pull requests are welcome. Ideas for future templates, additional section
-types, or export formats (DOCX, Markdown) are especially appreciated.
-
-Built with Streamlit · ReportLab · Pillow
-
-text
-
----
-
-## Notes
-
-- The **Troubleshooting** section covers the exact `FileNotFoundError` you hit, plus the common issues users run into with this app (font/character errors, missing `pypdfium2`, multi-page overflow).
-- The **templates table** and **section order** reflect exactly what's defined in `resume_pdf.py` and `app.py` — no invented features.
-- I marked `pypdfium2` as optional, matching the `try/except` in `app.py`.
-- Add a real **license** line if you plan to publish this on GitHub.
-
-Save it as `README.md` next to `app.py` and GitHub (or any Markdown viewer) will render it nicely.
+Free to use and modify for personal and commercial projects.
